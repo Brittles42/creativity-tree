@@ -1,22 +1,65 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
+import { useState } from "react";
+import { motion } from "framer-motion";
+import TreeVisualization from "./TreeVisualization";
 
-import { useState } from "react"
-import { motion } from "framer-motion"
-import TreeVisualization from "./TreeVisualization"
+type TreeNode = {
+  name: string;
+  children: TreeNode[];
+};
 
 export default function HeartTree() {
-  const [prompt, setPrompt] = useState("")
-  const [treeData, setTreeData] = useState(null)
+  const [prompt, setPrompt] = useState("");
+  const [treeData, setTreeData] = useState<TreeNode | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Here we would normally call an API to generate the tree data
-    // For now, we'll use a placeholder function
-    const generatedTree = generateTreeData(prompt)
-    setTreeData(generatedTree)
-  }
+  const fetchTreeData = async (retryCount = 5) => {
+    for (let attempt = 1; attempt <= retryCount; attempt++) {
+      try {
+        const response = await fetch("/api/getTree", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Attempt ${attempt}: Failed to fetch tree data`);
+        }
+
+        const generatedTree = await response.json();
+        return generatedTree;
+      } catch (error) {
+        console.error(error);
+        if (attempt === retryCount) {
+          throw new Error("Max retry attempts reached");
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000 * attempt)); // Exponential backoff
+      }
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setTreeData(null);
+
+    try {
+      const generatedTree = await fetchTreeData();
+      const structuredTree = {
+        name: prompt || "Wedding Planning",
+        children: generatedTree,
+      };
+
+      console.log(structuredTree);
+      setTreeData(structuredTree);
+    } catch (error) {
+      console.error("Error fetching tree data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="w-full max-w-4xl">
@@ -34,32 +77,20 @@ export default function HeartTree() {
             type="submit"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            disabled={loading}
           >
-            Generate Tree
+            {loading ? "Loading..." : "Generate Tree"}
           </motion.button>
         </div>
       </form>
+
+      {loading && (
+        <div className="flex justify-center items-center">
+          <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      )}
+
       {treeData && <TreeVisualization data={treeData} />}
     </div>
-  )
+  );
 }
-
-// Placeholder function to generate tree data
-function generateTreeData(prompt: string) {
-  // This is a simplified example. In a real application, this would be more complex
-  // and would likely involve calling an API
-  return {
-    name: prompt,
-    children: [
-      {
-        name: "Branch 1",
-        children: [{ name: "Leaf 1.1" }, { name: "Leaf 1.2" }],
-      },
-      {
-        name: "Branch 2",
-        children: [{ name: "Leaf 2.1" }, { name: "Leaf 2.2" }],
-      },
-    ],
-  }
-}
-

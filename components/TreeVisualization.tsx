@@ -28,31 +28,52 @@ const HeartNode = ({ nodeDatum, toggleNode, onClick }: {
 }) => {
   return (
     <motion.g whileHover={{ scale: 1.1 }} onClick={() => onClick(nodeDatum)}>
+      {/* Main Circle */}
       <motion.circle r={10} fill="#FF69B4" stroke="#8B008B" strokeWidth="2" />
+      
+      {/* Background for text */}
+      <rect 
+        x={-nodeDatum.name.length * 3.5} 
+        y={-7} 
+        width={nodeDatum.name.length * 7} 
+        height={14} 
+        rx={4} 
+        ry={4} 
+        fill="rgba(0, 0, 0, 0.7)"
+      />
+
+      {/* Text */}
       <text 
         fill="white" 
-        strokeWidth="1" 
+        stroke="white"
+        strokeWidth="0"
+        fontSize="10px" 
+        fontWeight="bold"
         x="0" 
-        y="0" 
+        y="3" 
         textAnchor="middle" 
-        dominantBaseline="middle"
       >
         {nodeDatum.name}
       </text>
+
+      {/* Expand/Collapse Toggle (if children exist) */}
       {nodeDatum.children && (
         <motion.circle
           r={5}
           cx="0"
           cy="-15"
           fill="#8B008B"
-          onClick={toggleNode}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleNode && toggleNode();
+          }}
           whileHover={{ scale: 1.2 }}
           whileTap={{ scale: 0.8 }}
         />
       )}
     </motion.g>
-  )
-}
+  );
+};
 
 const Modal = ({ node, onClose }: { node: TreeNode, onClose: () => void }) => {
   if (!node) return null

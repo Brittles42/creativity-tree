@@ -186,6 +186,40 @@ const Modal = ({ node, onClose }: { node: TreeNode, onClose: () => void }) => {
     scrollToBottom();
   }, [messages]);
 
+  // Update the generateSpeech function
+  const generateSpeech = async (text: string) => {
+    try {
+      const response = await fetch('/api/text-to-speech', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate speech');
+      }
+
+      // Create blob from the audio data
+      const audioBlob = await response.blob();
+      if (audioBlob.size === 0) {
+        throw new Error('Received empty audio data');
+      }
+
+      // Create and play audio
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      
+      audio.onended = () => {
+        URL.revokeObjectURL(audioUrl);
+      };
+
+      await audio.play();
+    } catch (error) {
+      console.error('Failed to generate speech:', error);
+    }
+  };
+
   const handleSendMessage = async () => {
     if (!inputText.trim()) return;
 
@@ -222,6 +256,9 @@ const Modal = ({ node, onClose }: { node: TreeNode, onClose: () => void }) => {
 
       const chatData = await chatResponse.json();
       
+      // Generate and play speech for Miku's response
+      await generateSpeech(chatData.response);
+
       // Generate new image based on AI's response
       const imageResponse = await fetch('/api/generate-image', {
         method: 'POST',

@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 
-const BLACK_FOREST_API_KEY = 'a5f817ff-5c38-4ccd-a2a3-1ab82794faaa';
+const BLACK_FOREST_API_KEY = process.env["BLACK_FOREST_API_KEY"];
+
 const BLACK_FOREST_API_URL = 'https://api.blackforestai.com/v1/images/generations';
 
 export async function POST(request: Request) {
   try {
     const { message, response, context } = await request.json();
 
-    // Create a prompt that handles different response types
     const prompt = `Create an anime-style image of Hatsune Miku in a professional outfit 
     (white blazer, brown vest, white shirt) with long turquoise twin-tails. 
     She should express emotion based on this message: "${message}".

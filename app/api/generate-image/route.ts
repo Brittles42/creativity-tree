@@ -46,11 +46,28 @@ interface EmotionState {
 const getEmotionState = (response: string): EmotionState => {
   // Check for question patterns
   if (response.includes('?')) {
-    return {
-      expression: 'curious and attentive, maintaining her professional demeanor but with slightly raised eyebrows and interested eyes',
-      gesture: 'subtle head tilt and one hand delicately raised near her face in a thoughtful manner',
-      intensity: 'subtle'
-    };
+    const isThinkingQuestion = /hmm|let me think|interesting question/i.test(response);
+    const isExcitedQuestion = /great question|ooh|fascinating/i.test(response);
+    
+    if (isThinkingQuestion) {
+      return {
+        expression: 'curious and contemplative, with a gentle thoughtful smile and interested eyes',
+        gesture: 'head tilted slightly upward and to the right (about 15 degrees), one finger delicately touching chin',
+        intensity: 'subtle'
+      };
+    } else if (isExcitedQuestion) {
+      return {
+        expression: 'enthusiastically curious, with bright eyes and an eager smile',
+        gesture: 'head tilted slightly to the left (about 20 degrees) with an energetic forward lean',
+        intensity: 'moderate'
+      };
+    } else {
+      return {
+        expression: 'inquisitive and engaging, with raised eyebrows and an encouraging smile',
+        gesture: 'head tilted slightly to the right (about 10 degrees), maintaining eye contact with a warm expression',
+        intensity: 'subtle'
+      };
+    }
   }
 
   // Check for excitement/enthusiasm
@@ -139,26 +156,30 @@ export async function POST(request: Request) {
       - Professional outfit: Pristine white blazer, brown vest, crisp white shirt
       - Signature long turquoise twin-tails, perfectly styled
       - Clean, professional studio lighting emphasizing her face
-      - Front-facing or slight three-quarter view for clear expression
+      - Dynamic pose with natural head tilt
       - High-quality anime art style with attention to detail
       - Professional office/study background with subtle depth
+
+      Head Tilt Details:
+      - Natural and fluid head positioning
+      - Maintain eye contact despite the tilt
+      - Twin-tails following the head movement naturally
+      - Slight shadows adjusting to head position
+      - Neck and shoulders aligned naturally with tilt
 
       Expression Details:
       - Maintain her professional composure while showing genuine emotion
       - Eyes should convey emotion while staying clear and focused
       - Subtle changes in eyebrow position to enhance expression
       - Natural, professional-looking smile variations
-      - Slight head tilts and turns that remain professional
       - Elegant hand gestures that complement her expression
 
       Key Focus:
-      - Evolution from her standard professional pose
-      - Subtle but clear emotional changes
+      - Natural and dynamic head positioning
+      - Fluid and graceful movement suggestion
       - Maintaining professional appearance
-      - Natural transition in expression
-      - Consistent high-quality detail
-      
-      The change in expression should feel natural and professional, as if she's responding in a business setting.`,
+      - Clear emotional engagement
+      - Consistent high-quality detail`,
       width: 1024,
       height: 768,
       prompt_upsampling: false,

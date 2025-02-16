@@ -85,37 +85,52 @@ const HeartNode = ({ nodeDatum, toggleNode, onClick }: {
 };
 
 const Modal = ({ node, onClose }: { node: TreeNode, onClose: () => void }) => {
-  if (!node) return null
+  if (!node) return null;
 
-  const ancestors = findAncestors(node)
+  const ancestors = findAncestors(node);
 
   const renderHierarchy = (node: TreeNode, level = 0) => (
     <div key={node.name} style={{ marginLeft: level * 20 }}>
       <strong>{node.name}</strong>
       {node.children && node.children.map((child) => renderHierarchy(child, level + 1))}
     </div>
-  )
+  );
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-      <div className="bg-white p-4 rounded shadow-lg w-96 h-64 overflow-y-auto">
-        <h2 className="text-lg font-bold mb-2">{node.name}</h2>
-        
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-md transition-opacity duration-300">
+      <div className="relative bg-white/90 backdrop-blur-lg p-6 rounded-2xl shadow-2xl w-[45em] max-w-[90%] h-[55vh] overflow-y-auto border border-gray-200">
+        {/* Close (X) button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-900 transition-all duration-200 text-2xl"
+        >
+          &times;
+        </button>
+
+        <h2 className="text-2xl font-semibold text-gray-900 mb-4">{node.name}</h2>
+
         {ancestors.length > 0 && (
-          <>
-            <h3 className="text-sm font-semibold">Above:</h3>
-            <div>{ancestors.map((ancestor) => <div key={ancestor.name}>{ancestor.name}</div>)}</div>
-          </>
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">Above:</h3>
+            <div className="flex flex-wrap gap-2">
+              {ancestors.map((ancestor) => (
+                <div
+                  key={ancestor.name}
+                  className="px-3 py-1 bg-neutral-300 rounded-[10px] text-sm text-gray-800"
+                >
+                  {ancestor.name}
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
-        <h3 className="text-sm font-semibold mt-2">Below:</h3>
-        <div>{renderHierarchy(node)}</div>
-
-        <button onClick={onClose} className="mt-4 bg-blue-500 text-white px-4 py-2 rounded">Close</button>
+        <h3 className="text-sm font-semibold text-gray-700 mb-2">Below:</h3>
+        <div className="space-y-2">{renderHierarchy(node)}</div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 export default function TreeVisualization({ data }: { data: TreeNode }) {
   const [translate, setTranslate] = useState({ x: 0, y: 0 })

@@ -28,13 +28,22 @@ const HeartNode = ({ nodeDatum, toggleNode, onClick }: {
 }) => {
   return (
     <motion.g whileHover={{ scale: 1.1 }} onClick={() => onClick(nodeDatum)}>
-      {/* Main Circle */}
-      <motion.circle r={10} fill="#FF69B4" stroke="#8B008B" strokeWidth="2" />
-      
-      {/* Background for text */}
+      {/* Smaller Heart Shape */}
+      <path
+        d="M 0 -7 
+           C 3.5 -14, 14 -14, 14 -3.5 
+           C 14 3.5, 7 10, 0 17 
+           C -7 10, -14 3.5, -14 -3.5 
+           C -14 -14, -3.5 -14, 0 -7 Z"
+        fill="#FF69B4"
+        stroke="#8B008B"
+        strokeWidth="2"
+      />
+
+      {/* Background for text (positioned below the heart) */}
       <rect 
         x={-nodeDatum.name.length * 3.5} 
-        y={-7} 
+        y={20}  // Adjusted to move below the smaller heart
         width={nodeDatum.name.length * 7} 
         height={14} 
         rx={4} 
@@ -42,7 +51,7 @@ const HeartNode = ({ nodeDatum, toggleNode, onClick }: {
         fill="rgba(0, 0, 0, 0.7)"
       />
 
-      {/* Text */}
+      {/* Text (positioned below the heart) */}
       <text 
         fill="white" 
         stroke="white"
@@ -50,7 +59,7 @@ const HeartNode = ({ nodeDatum, toggleNode, onClick }: {
         fontSize="10px" 
         fontWeight="bold"
         x="0" 
-        y="3" 
+        y="30"  // Adjusted to move below the smaller heart
         textAnchor="middle" 
       >
         {nodeDatum.name}
@@ -59,7 +68,7 @@ const HeartNode = ({ nodeDatum, toggleNode, onClick }: {
       {/* Expand/Collapse Toggle (if children exist) */}
       {nodeDatum.children && (
         <motion.circle
-          r={5}
+          r={4}  // Slightly smaller toggle button
           cx="0"
           cy="-15"
           fill="#8B008B"
@@ -135,7 +144,7 @@ export default function TreeVisualization({ data }: { data: TreeNode }) {
         renderCustomNodeElement={(rd3tProps) => (
           <HeartNode {...rd3tProps} onClick={setSelectedNode} />
         )}
-        separation={{ siblings: 0.4, nonSiblings: 0.4 }}
+        separation={{ siblings: 0.5, nonSiblings: 0.5 }}
         nodeSize={{ x: 200, y: 120 }}
       />
       {selectedNode && <Modal node={selectedNode} onClose={() => setSelectedNode(null)} />}

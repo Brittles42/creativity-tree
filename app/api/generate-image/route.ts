@@ -1,47 +1,71 @@
 import { NextResponse } from 'next/server';
 
-const BLACK_FOREST_API_KEY = process.env["BLACK_FOREST_API_KEY"];
-
-const BLACK_FOREST_API_URL = 'https://api.blackforestai.com/v1/images/generations';
+const BFL_API_KEY = process.env["BLACK_FOREST_API_KEY"];
+const BFL_API_URL = 'https://api.us1.bfl.ai/v1/flux-pro-1.1';
 
 export async function POST(request: Request) {
   try {
-    const { message, response, context } = await request.json();
+    // Read and log the request body
+    const rawBody = await request.text();
+    console.log("Raw request body:", rawBody);
 
-    const prompt = `Create an anime-style image of Hatsune Miku in a professional outfit 
-    (white blazer, brown vest, white shirt) with long turquoise twin-tails. 
-    She should express emotion based on this message: "${message}".
-    If the message contains a question, show her looking curious and engaged.
-    If she's explaining something, show her looking enthusiastic and helpful.
-    If she's suggesting an idea, show her looking excited and inspired.
-    Always maintain a warm and positive expression, but vary her:
-    - Eye expressions (wide and curious, gentle and warm, bright and excited)
-    - Smile (gentle smile, broad grin, enthusiastic beam)
-    - Head tilt (slight tilt for curiosity, straight on for explanations)
-    - Hand gestures (subtle pointing, open palms, energetic gestures)
-    High quality, detailed, professional lighting, facing forward with clear view of expression.`;
+    let jsonBody;
+    try {
+      jsonBody = JSON.parse(rawBody);
+    } catch (parseError) {
+      console.error("Failed to parse request body:", parseError);
+      return NextResponse.json(
+        { error: "Invalid JSON format in request body." },
+        { status: 400 }
+      );
+    }
 
-    const imageResponse = await fetch(BLACK_FOREST_API_URL, {
+    // Try to extract prompt from different fields
+    const prompt = jsonBody.prompt || jsonBody.message || jsonBody.response;
+
+    if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
+      console.error("Invalid prompt received:", prompt);
+      return NextResponse.json(
+        { error: "Invalid prompt: A non-empty string is required." },
+        { status: 400 }
+      );
+    }
+
+    const response = await fetch(BFL_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${BLACK_FOREST_API_KEY}`
+        'Accept': 'application/json',
+        ...(BFL_API_KEY ? { 'x-key': BFL_API_KEY } : {})
       },
       body: JSON.stringify({
-        prompt: prompt,
-        n: 1,
-        size: '1024x1024',
-        style: 'anime'  // Using anime style for Miku
+        prompt,
+        width: 1024,
+        height: 768
       })
     });
 
-    const data = await imageResponse.json();
-    return NextResponse.json({ imageUrl: data.data[0].url });
+    if (!response.ok) {
+      throw new Error(`API request failed with status ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('Image response:', data);
+
+    return NextResponse.json({ request_id: data.polling_url });
   } catch (error) {
     console.error('Error generating image:', error);
+    
+    // Type narrowing for error
+    const errorMessage = error instanceof Error 
+      ? error.message 
+      : typeof error === 'string' 
+        ? error 
+        : 'Failed to generate image';
+
     return NextResponse.json(
-      { imageUrl: null, error: 'Failed to generate image' },
+      { error: errorMessage },
       { status: 500 }
     );
   }
-} 
+}

@@ -229,19 +229,53 @@ const Modal = ({ node, onClose }: { node: TreeNode, onClose: () => void }) => {
           context: node.name
         }),
       });
-
+      
       const imageData = await imageResponse.json();
-      console.log('Image response:', imageData);
+      console.log("API Response:", imageData);
+      
+      if (!imageData.request_id) {
+        console.error("Missing request_id in response");
+        return;
+      }
+      
+      let image_link_json;
+      let retries = 0;
+      const maxRetries = 10;
+      const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+      
+      while (retries < maxRetries) {
+        const image_link = await fetch(imageData.request_id, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        });
+      
+        image_link_json = await image_link.json();
+        console.log(`Attempt ${retries + 1}:`, image_link_json);
+      
+        if (image_link_json?.status !== "Pending") {
+          break;
+        }
+      
+        retries++;
+        await delay(2000);
+      }
+      
+      if (!image_link_json?.result?.sample) {
+        console.error("Missing sample in result:", image_link_json);
+        return;
+      }
+      
+      setCurrentImage(image_link_json.result.sample);          
 
-      if (imageData.imageUrl) {
-        setCurrentImage(imageData.imageUrl);
+      if (imageData.request_id?.result?.sample) {
+        console.log('Image responseee:', imageData.request_id.result.sample);
+        setCurrentImage(imageData.request_id.result.sample);
       } else {
         console.error('No image URL in response:', imageData);
-      }
+      }      
 
-      // Remove typing message and add actual response
       setMessages(prev => {
-        const withoutTyping = prev.slice(0, -1); // Remove typing message
+        const withoutTyping = prev.slice(0, -1);
         return [...withoutTyping, {
           text: chatData.response,
           sender: 'ai',
@@ -251,7 +285,6 @@ const Modal = ({ node, onClose }: { node: TreeNode, onClose: () => void }) => {
 
     } catch (error) {
       console.error('Error in message handling:', error);
-      // Remove typing message on error
       setMessages(prev => prev.slice(0, -1));
     } finally {
       setIsLoading(false);
@@ -261,7 +294,6 @@ const Modal = ({ node, onClose }: { node: TreeNode, onClose: () => void }) => {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-md transition-opacity duration-300">
       <div className="relative bg-white/90 backdrop-blur-lg mt-16 p-6 rounded-2xl shadow-2xl w-[80em] max-w-[95%] h-[80vh] flex gap-6">
-        {/* Left Section - Image Area */}
         <div className="w-1/2 bg-orange-400 rounded-xl overflow-hidden flex items-center justify-center relative">
           {isLoading && (
             <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">

@@ -207,7 +207,7 @@ const Modal = ({ node, onClose }: { node: TreeNode, onClose: () => void }) => {
 
     try {
       // Get AI text response
-      const chatResponse = await fetch('/api/chat', {
+      const chatResponse = await fetch('/api/llamaChat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -260,7 +260,7 @@ const Modal = ({ node, onClose }: { node: TreeNode, onClose: () => void }) => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-md transition-opacity duration-300">
-      <div className="relative bg-white/90 backdrop-blur-lg p-6 rounded-2xl shadow-2xl w-[80em] max-w-[95%] h-[80vh] flex gap-6">
+      <div className="relative bg-white/90 backdrop-blur-lg mt-16 p-6 rounded-2xl shadow-2xl w-[80em] max-w-[95%] h-[80vh] flex gap-6">
         {/* Left Section - Image Area */}
         <div className="w-1/2 bg-orange-400 rounded-xl overflow-hidden flex items-center justify-center relative">
           {isLoading && (

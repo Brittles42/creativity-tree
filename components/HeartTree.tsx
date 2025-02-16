@@ -68,7 +68,7 @@ export default function HeartTree() {
         <div className="max-w-4xl mx-auto flex items-center gap-4">
           {/* Logo/Title */}
           <h1 className="text-purple-600 text-xl font-bold whitespace-nowrap">
-            Nodethis
+            HeartNet
           </h1>
 
           {/* Search form */}

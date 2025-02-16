@@ -26,12 +26,9 @@ const HeartNode = ({ nodeDatum, toggleNode, onClick }: {
   toggleNode?: () => void, 
   onClick: (node: TreeNode) => void 
 }) => {
-  // Rotated heart path for horizontal orientation
-  const heartPath = "M10,0 C20,-5 20,-20 10,-20 C0,-20 -15,0 -15,0 C-15,0 0,20 10,-20 C20,-20 20,-5 10,0"
-
   return (
     <motion.g whileHover={{ scale: 1.1 }} onClick={() => onClick(nodeDatum)}>
-      <motion.path d={heartPath} fill="#FF69B4" stroke="#8B008B" strokeWidth="2" />
+      <motion.circle r={10} fill="#FF69B4" stroke="#8B008B" strokeWidth="2" />
       <text 
         fill="white" 
         strokeWidth="1" 
@@ -39,7 +36,6 @@ const HeartNode = ({ nodeDatum, toggleNode, onClick }: {
         y="0" 
         textAnchor="middle" 
         dominantBaseline="middle"
-        transform="rotate(90)"
       >
         {nodeDatum.name}
       </text>
@@ -109,30 +105,16 @@ export default function TreeVisualization({ data }: { data: TreeNode }) {
     }
   }, [])
 
-  const heartPathFunc = (linkDatum: { source: { x: number, y: number }, target: { x: number, y: number } }) => {
-    const { source, target } = linkDatum
-    const dx = target.x - source.x
-    const curve = Math.min(Math.abs(dx) * 0.1, 20)
-
-    return `
-      M ${source.x},${source.y}
-      C ${source.x + dx/3},${source.y}
-        ${source.x + dx*2/3},${target.y}
-        ${target.x},${target.y}
-    `
-  }
-
   return (
     <div ref={containerRef} className="w-full h-full min-h-[800px]">
       <Tree
         data={data}
         translate={translate}
         orientation="horizontal"
-        pathFunc={heartPathFunc}
         renderCustomNodeElement={(rd3tProps) => (
           <HeartNode {...rd3tProps} onClick={setSelectedNode} />
         )}
-        separation={{ siblings: 1.5, nonSiblings: 2 }}
+        separation={{ siblings: 0.4, nonSiblings: 0.4 }}
         nodeSize={{ x: 200, y: 120 }}
       />
       {selectedNode && <Modal node={selectedNode} onClose={() => setSelectedNode(null)} />}

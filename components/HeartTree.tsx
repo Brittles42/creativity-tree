@@ -64,7 +64,7 @@ export default function HeartTree() {
   return (
     <div className="h-screen w-screen flex flex-col">
       {/* Fixed header bar at top */}
-      <div className="w-full p-4 bg-white/80 backdrop-blur-sm fixed top-0 left-0 z-10 shadow-sm">
+      <div className="w-full p-6 bg-white/80 backdrop-blur-sm fixed top-0 left-0 z-10 shadow-sm">
         <div className="max-w-4xl mx-auto flex items-center gap-4">
           {/* Logo/Title */}
           <h1 className="text-purple-600 text-xl font-bold whitespace-nowrap">
@@ -103,7 +103,7 @@ export default function HeartTree() {
       )}
 
       {/* Tree visualization container with fixed height */}
-      <div className="flex-1 mt-16"> {/* Reduced top margin */}
+      <div className="flex-1"> {/* Reduced top margin */}
         <div className="h-[calc(100vh-4rem)] w-full overflow-auto border-t border-purple-100">
           {treeData && <TreeVisualization data={treeData} />}
         </div>

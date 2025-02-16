@@ -50,6 +50,7 @@ export default function HeartTree() {
     e.preventDefault();
     setLoading(true);
     setTreeData(null);
+    setPrompt("");
 
     try {
       const generatedTree = await fetchTreeData();

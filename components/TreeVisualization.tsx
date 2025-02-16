@@ -231,48 +231,11 @@ const Modal = ({ node, onClose }: { node: TreeNode, onClose: () => void }) => {
       });
       
       const imageData = await imageResponse.json();
-      console.log("API Response:", imageData);
-      
-      if (!imageData.request_id) {
-        console.error("Missing request_id in response");
-        return;
-      }
-      
-      let image_link_json;
-      let retries = 0;
-      const maxRetries = 10;
-      const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
-      
-      while (retries < maxRetries) {
-        const image_link = await fetch(imageData.request_id, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-        });
-      
-        image_link_json = await image_link.json();
-        console.log(`Attempt ${retries + 1}:`, image_link_json);
-      
-        if (image_link_json?.status !== "Pending") {
-          break;
-        }
-      
-        retries++;
-        await delay(2000);
-      }
-      
-      if (!image_link_json?.result?.sample) {
-        console.error("Missing sample in result:", image_link_json);
-        return;
-      }
-      
-      setCurrentImage(image_link_json.result.sample);          
 
-      if (imageData.request_id?.result?.sample) {
-        console.log('Image responseee:', imageData.request_id.result.sample);
-        setCurrentImage(imageData.request_id.result.sample);
-      } else {
-        console.error('No image URL in response:', imageData);
-      }      
+      console.log('Image responseee:', imageData);
+      
+      console.log('New image URL:', imageData.imageUrl);
+      setCurrentImage(imageData.imageUrl);
 
       setMessages(prev => {
         const withoutTyping = prev.slice(0, -1);

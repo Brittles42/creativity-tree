@@ -3,69 +3,210 @@ import { NextResponse } from 'next/server';
 const BFL_API_KEY = process.env["BLACK_FOREST_API_KEY"];
 const BFL_API_URL = 'https://api.us1.bfl.ai/v1/flux-pro-1.1';
 
+interface ImageGenerationRequest {
+  prompt: string;
+  width: number;
+  height: number;
+  prompt_upsampling: boolean;
+  seed: number;
+  safety_tolerance: number;
+  output_format: 'jpeg' | 'png';
+}
+
+interface ImageGenSubmitResponse {
+    id: string;
+    polling_url: string;
+
+}
+interface ImageGenerationResponse {
+  success: boolean;
+  data?: {
+    pulling_url?: string;
+  };
+  error?: {
+    message: string;
+    code: string;
+  };
+}
+
+interface PollResponse {
+  status: string;
+  result?: {
+    sample?: string;
+    error?: string;
+  };
+}
+
+interface EmotionState {
+  expression: string;
+  gesture: string;
+  intensity: 'subtle' | 'moderate' | 'strong';
+}
+
+const getEmotionState = (response: string): EmotionState => {
+  // Check for question patterns
+  if (response.includes('?')) {
+    return {
+      expression: 'curious and attentive, maintaining her professional demeanor but with slightly raised eyebrows and interested eyes',
+      gesture: 'subtle head tilt and one hand delicately raised near her face in a thoughtful manner',
+      intensity: 'subtle'
+    };
+  }
+
+  // Check for excitement/enthusiasm
+  if (response.includes('!') || /great|amazing|wonderful|fantastic/i.test(response)) {
+    return {
+      expression: 'professionally enthusiastic with brightened eyes and a warm, genuine smile',
+      gesture: 'slightly more animated posture while maintaining elegance, hands gracefully expressing enthusiasm',
+      intensity: 'moderate'
+    };
+  }
+
+  // Check for teaching/explaining
+  if (/let me explain|for example|this means|in other words/i.test(response)) {
+    return {
+      expression: 'professionally confident with a gentle, knowledgeable smile and focused eyes',
+      gesture: 'one hand raised in an elegant explaining gesture, maintaining perfect posture',
+      intensity: 'moderate'
+    };
+  }
+
+  // Check for empathy/understanding
+  if (/understand|feel|I see|that must be/i.test(response)) {
+    return {
+      expression: 'empathetic yet professional, with softened eyes and a understanding smile',
+      gesture: 'slight forward lean showing attention, hands clasped professionally',
+      intensity: 'subtle'
+    };
+  }
+
+  // Check for thinking/contemplating
+  if (/hmm|well|perhaps|maybe|let's see/i.test(response)) {
+    return {
+      expression: 'thoughtfully professional with a slight contemplative look, eyes showing careful consideration',
+      gesture: 'one hand elegantly positioned near chin, head tilted slightly in thought',
+      intensity: 'subtle'
+    };
+  }
+
+  // Default professional friendly state
+  return {
+    expression: 'warmly professional with a gentle, welcoming smile and attentive eyes',
+    gesture: 'poised and elegant default stance with perfect professional posture',
+    intensity: 'subtle'
+  };
+};
+
+async function pollForImage(pullingUrl: string): Promise<string> {
+  const maxAttempts = 60;
+  const delayMs = 2000;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const response = await fetch(pullingUrl, {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Key': BFL_API_KEY
+      }
+    });
+    
+    const data: PollResponse = await response.json();
+    console.log(`Poll attempt ${attempt + 1}:`, data);
+
+    if (data.status === 'Ready' && data.result?.sample) {
+      return data.result.sample;
+    }
+
+    await new Promise(resolve => setTimeout(resolve, delayMs));
+  }
+
+  throw new Error('Timeout waiting for image generation');
+}
+
 export async function POST(request: Request) {
-  try {
-    // Read and log the request body
-    const rawBody = await request.text();
-    console.log("Raw request body:", rawBody);
+  try {
+    const { message, response, context } = await request.json();
+    const emotionState = getEmotionState(response);
 
-    let jsonBody;
-    try {
-      jsonBody = JSON.parse(rawBody);
-    } catch (parseError) {
-      console.error("Failed to parse request body:", parseError);
-      return NextResponse.json(
-        { error: "Invalid JSON format in request body." },
-        { status: 400 }
-      );
-    }
+    const params: ImageGenerationRequest = {
+      prompt: `Create a high-quality anime-style portrait of Hatsune Miku as a professional assistant.
+      She is responding to: "${response}"
 
-    // Try to extract prompt from different fields
-    const prompt = jsonBody.prompt || jsonBody.message || jsonBody.response;
+      Current Emotional State (${emotionState.intensity} intensity):
+      Expression: ${emotionState.expression}
+      Gesture: ${emotionState.gesture}
 
-    if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
-      console.error("Invalid prompt received:", prompt);
-      return NextResponse.json(
-        { error: "Invalid prompt: A non-empty string is required." },
-        { status: 400 }
-      );
-    }
+      Essential Style Elements:
+      - Professional outfit: Pristine white blazer, brown vest, crisp white shirt
+      - Signature long turquoise twin-tails, perfectly styled
+      - Clean, professional studio lighting emphasizing her face
+      - Front-facing or slight three-quarter view for clear expression
+      - High-quality anime art style with attention to detail
+      - Professional office/study background with subtle depth
 
-    const response = await fetch(BFL_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        ...(BFL_API_KEY ? { 'x-key': BFL_API_KEY } : {})
-      },
-      body: JSON.stringify({
-        prompt,
-        width: 1024,
-        height: 768
-      })
-    });
+      Expression Details:
+      - Maintain her professional composure while showing genuine emotion
+      - Eyes should convey emotion while staying clear and focused
+      - Subtle changes in eyebrow position to enhance expression
+      - Natural, professional-looking smile variations
+      - Slight head tilts and turns that remain professional
+      - Elegant hand gestures that complement her expression
 
-    if (!response.ok) {
-      throw new Error(`API request failed with status ${response.status}`);
-    }
+      Key Focus:
+      - Evolution from her standard professional pose
+      - Subtle but clear emotional changes
+      - Maintaining professional appearance
+      - Natural transition in expression
+      - Consistent high-quality detail
+      
+      The change in expression should feel natural and professional, as if she's responding in a business setting.`,
+      width: 1024,
+      height: 768,
+      prompt_upsampling: false,
+      seed: 42,
+      safety_tolerance: 2,
+      output_format: 'jpeg'
+    };
 
-    const data = await response.json();
-    console.log('Image response:', data);
+    console.log('Sending request with params:', params);
 
-    return NextResponse.json({ request_id: data.polling_url });
-  } catch (error) {
-    console.error('Error generating image:', error);
-    
-    // Type narrowing for error
-    const errorMessage = error instanceof Error 
-      ? error.message 
-      : typeof error === 'string' 
-        ? error 
-        : 'Failed to generate image';
+    const imageResponse = await fetch(BFL_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Key': BFL_API_KEY
+      },
+      body: JSON.stringify(params)
+    });
 
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
-  }
+    // Log the raw response
+    console.log('Response status:', imageResponse.status);
+    console.log('Response headers:', Object.fromEntries(imageResponse.headers.entries()));
+    
+    const responseText = await imageResponse.text();
+    console.log('Raw response text:', responseText);
+    
+    // Parse the response text back to JSON
+    const data: ImageGenSubmitResponse = JSON.parse(responseText);
+    console.log('Parsed response data:', data);
+
+    console.log('Bazinga 1 polling_url:', data.polling_url);
+
+    // Poll for the actual image URL
+    const imageUrl = await pollForImage(data.polling_url);
+
+    
+    console.log('Final image URL:', imageUrl);
+
+    return NextResponse.json({ imageUrl });
+  } catch (error) {
+    console.error('Detailed error:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      error
+    });
+    return NextResponse.json(
+      { imageUrl: null, error: error instanceof Error ? error.message : 'Failed to generate image' },
+      { status: 500 }
+    );
+  }
 }

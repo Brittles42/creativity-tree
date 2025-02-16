@@ -7,8 +7,6 @@ export async function POST(request: Request) {
   try {
     const { text } = await request.json();
     
-    console.log('Generating speech for:', text);
-
     const response = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${MIKU_VOICE_ID}/stream`,
       {
@@ -16,34 +14,39 @@ export async function POST(request: Request) {
         headers: {
           'Accept': 'audio/mpeg',
           'Content-Type': 'application/json',
-          'xi-api-key': ELEVEN_LABS_API_KEY || '',
+          'xi-api-key': ELEVEN_LABS_API_KEY!,
         },
         body: JSON.stringify({
           text,
           model_id: "eleven_multilingual_v2",
           voice_settings: {
             stability: 0.5,
-            similarity_boost: 0.75
+            similarity_boost: 0.75,
+            style: 0.5,
+            speaking_rate: 1.3
           }
         }),
       }
     );
 
     if (!response.ok) {
-      throw new Error(`ElevenLabs API error: ${response.status}`);
+      const errorText = await response.text();
+      console.error('ElevenLabs API error:', errorText);
+      throw new Error('Failed to generate speech');
     }
 
-    // Stream the audio data directly
+    // Create a new response with the audio data and appropriate headers
     return new Response(response.body, {
       headers: {
-        'Content-Type': 'audio/mpeg'
+        'Content-Type': 'audio/mpeg',
+        'Transfer-Encoding': 'chunked'
       }
     });
 
   } catch (error) {
     console.error('Text-to-speech error:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to generate speech' },
+      { error: 'Failed to generate speech' },
       { status: 500 }
     );
   }

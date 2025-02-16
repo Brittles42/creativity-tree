@@ -40,6 +40,12 @@ export default function HeartTree() {
     }
   };
 
+  const handleEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleSubmit(e);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -64,12 +70,13 @@ export default function HeartTree() {
   return (
     <div className="w-full max-w-4xl">
       <form onSubmit={handleSubmit} className="mb-8">
-        <div className="flex items-center border-b border-purple-500 py-2">
+        <div className="flex items-center border-b border-purple-500 py-2 hover:bg-neutral-500 hover:bg-opacity-[.1] transition-all duration-200">
           <input
-            className="appearance-none bg-transparent border-none w-full text-gray-700 mr-3 py-1 px-2 leading-tight focus:outline-none"
+            className="appearance-none bg-transparent hover:text-lg border-none w-full text-gray-700 mr-3 py-1 px-2 leading-tight focus:outline-none transition-all duration-800"
             type="text"
             placeholder="Enter your creative prompt..."
             value={prompt}
+            onKeyDown={handleEnter}
             onChange={(e) => setPrompt(e.target.value)}
           />
           <motion.button

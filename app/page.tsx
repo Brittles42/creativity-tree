@@ -2,7 +2,7 @@ import HeartTree from "@/components/HeartTree"
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24 z-[-10]">
+    <main className="flex min-h-screen flex-col items-center justify-center pt-16 p-24 z-[-10]">
       <div className="absolute top-[10%] left-[5%] w-[450px] h-[150px] rounded-full bg-purple-500 blur-[10em] z-[-10]"></div>
       <div className="absolute top-[50%] left-[80%] w-[220px] h-[120px] rounded-full bg-pink-500 blur-[17em] z-[-10]"></div>
       <div className="absolute bottom-[20%] right-[10%] w-[380px] h-[180px] rounded-full bg-blue-500 blur-[12em] z-[-10]"></div>

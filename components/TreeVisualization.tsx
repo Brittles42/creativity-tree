@@ -26,14 +26,36 @@ const HeartNode = ({ nodeDatum, toggleNode, onClick }: {
   toggleNode?: () => void, 
   onClick: (node: TreeNode) => void 
 }) => {
-  const heartPath = "M0,-10 C-5,-20 -20,-20 -20,-10 C-20,0 0,15 0,15 C0,15 20,0 20,-10 C20,-20 5,-20 0,-10"
+  const heartPath = "M0,-10 C-5,-20 -20,-20 -20,-10 C-20,0 0,15 0,15 C0,15 20,0 20,-10 C20,-20 5,-20 0,-10";
 
   return (
     <motion.g whileHover={{ scale: 1.1 }} onClick={() => onClick(nodeDatum)}>
       <motion.path d={heartPath} fill="#FF69B4" stroke="#8B008B" strokeWidth="2" />
-      <text fill="white" strokeWidth="1" x="0" y="15" textAnchor="middle" dominantBaseline="middle">
-        {nodeDatum.name}
-      </text>
+
+      <foreignObject x="-75" y="18" width="160" height="30">
+        <div 
+          style={{
+            fontSize: "14px",
+            fontWeight: "bold",
+            textAlign: "center",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            background: "rgba(0, 0, 0, 0.6)",
+            color: "white",
+            borderRadius: "4px",
+            padding: "4px 10px",
+            maxWidth: "160px",
+            height: "100%", // Ensures vertical centering
+          }}
+        >
+          {nodeDatum.name}
+        </div>
+      </foreignObject>
+
       {nodeDatum.children && (
         <motion.circle
           r={5}
@@ -46,8 +68,8 @@ const HeartNode = ({ nodeDatum, toggleNode, onClick }: {
         />
       )}
     </motion.g>
-  )
-}
+  );
+};
 
 const Modal = ({ node, onClose }: { node: TreeNode, onClose: () => void }) => {
   if (!node) return null
@@ -62,21 +84,25 @@ const Modal = ({ node, onClose }: { node: TreeNode, onClose: () => void }) => {
   )
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-      <div className="bg-white p-4 rounded shadow-lg w-96 h-64 overflow-y-auto">
-        <h2 className="text-lg font-bold mb-2">{node.name}</h2>
-        
+    <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex justify-center items-center transition-opacity duration-300">
+      <div className="bg-white p-6 rounded-2xl shadow-2xl w-[90%] max-w-lg max-h-[80vh] overflow-y-auto transform scale-95 animate-fadeIn">
+        <h2 className="text-xl font-semibold text-gray-900 mb-3">{node.name}</h2>
+
         {ancestors.length > 0 && (
-          <>
-            <h3 className="text-sm font-semibold">Above:</h3>
-            <div>{ancestors.map((ancestor) => <div key={ancestor.name}>{ancestor.name}</div>)}</div>
-          </>
+          <div className="mb-3">
+            <h3 className="text-sm font-medium text-gray-700">Above:</h3>
+            <div className="bg-gray-100 p-2 rounded-[10px] text-gray-800">{ancestors.map((ancestor) => <div key={ancestor.name}>{ancestor.name}</div>)}</div>
+          </div>
         )}
 
-        <h3 className="text-sm font-semibold mt-2">Below:</h3>
-        <div>{renderHierarchy(node)}</div>
+        <h3 className="text-sm font-medium text-gray-700 mt-2">Below:</h3>
+        <div className="bg-gray-100 p-2 rounded-[10px] text-gray-800">{renderHierarchy(node)}</div>
 
-        <button onClick={onClose} className="mt-4 bg-blue-500 text-white px-4 py-2 rounded">Close</button>
+        <div className="flex justify-end mt-5">
+          <button onClick={onClose} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-[10px] transition-all duration-200">
+            Close
+          </button>
+        </div>
       </div>
     </div>
   )

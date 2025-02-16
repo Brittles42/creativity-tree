@@ -95,15 +95,33 @@ export default function HeartTree() {
         </div>
       </div>
 
-      {/* Loading spinner */}
       {loading && (
         <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
-          <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+          <motion.div
+            className="w-16 h-16 flex justify-center items-center"
+            animate={{
+              scale: [1, 5.5, 1],
+              opacity: [0.8, 1, 0.8],
+            }}
+            transition={{
+              repeat: Infinity,
+              duration: 2.8,
+              ease: "easeInOut",
+            }}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              className="w-16 h-16 text-purple-500"
+            >
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+            </svg>
+          </motion.div>
         </div>
       )}
 
       {/* Tree visualization container with fixed height */}
-      <div className="flex-1"> {/* Reduced top margin */}
+      <div className="flex-1">
         <div className="h-[calc(100vh-4rem)] w-full overflow-auto border-t border-purple-100">
           {treeData && <TreeVisualization data={treeData} />}
         </div>

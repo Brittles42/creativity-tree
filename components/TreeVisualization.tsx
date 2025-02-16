@@ -26,41 +26,28 @@ const HeartNode = ({ nodeDatum, toggleNode, onClick }: {
   toggleNode?: () => void, 
   onClick: (node: TreeNode) => void 
 }) => {
-  const heartPath = "M0,-10 C-5,-20 -20,-20 -20,-10 C-20,0 0,15 0,15 C0,15 20,0 20,-10 C20,-20 5,-20 0,-10";
+  // Rotated heart path for horizontal orientation
+  const heartPath = "M10,0 C20,-5 20,-20 10,-20 C0,-20 -15,0 -15,0 C-15,0 0,20 10,-20 C20,-20 20,-5 10,0"
 
   return (
     <motion.g whileHover={{ scale: 1.1 }} onClick={() => onClick(nodeDatum)}>
       <motion.path d={heartPath} fill="#FF69B4" stroke="#8B008B" strokeWidth="2" />
-
-      <foreignObject x="-75" y="18" width="160" height="30">
-        <div 
-          style={{
-            fontSize: "14px",
-            fontWeight: "bold",
-            textAlign: "center",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            background: "rgba(0, 0, 0, 0.6)",
-            color: "white",
-            borderRadius: "4px",
-            padding: "4px 10px",
-            maxWidth: "160px",
-            height: "100%", // Ensures vertical centering
-          }}
-        >
-          {nodeDatum.name}
-        </div>
-      </foreignObject>
-
+      <text 
+        fill="white" 
+        strokeWidth="1" 
+        x="0" 
+        y="0" 
+        textAnchor="middle" 
+        dominantBaseline="middle"
+        transform="rotate(90)"
+      >
+        {nodeDatum.name}
+      </text>
       {nodeDatum.children && (
         <motion.circle
           r={5}
-          cx="15"
-          cy="0"
+          cx="0"
+          cy="-15"
           fill="#8B008B"
           onClick={toggleNode}
           whileHover={{ scale: 1.2 }}
@@ -68,8 +55,8 @@ const HeartNode = ({ nodeDatum, toggleNode, onClick }: {
         />
       )}
     </motion.g>
-  );
-};
+  )
+}
 
 const Modal = ({ node, onClose }: { node: TreeNode, onClose: () => void }) => {
   if (!node) return null
@@ -84,25 +71,21 @@ const Modal = ({ node, onClose }: { node: TreeNode, onClose: () => void }) => {
   )
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex justify-center items-center transition-opacity duration-300">
-      <div className="bg-white p-6 rounded-2xl shadow-2xl w-[90%] max-w-lg max-h-[80vh] overflow-y-auto transform scale-95 animate-fadeIn">
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">{node.name}</h2>
-
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+      <div className="bg-white p-4 rounded shadow-lg w-96 h-64 overflow-y-auto">
+        <h2 className="text-lg font-bold mb-2">{node.name}</h2>
+        
         {ancestors.length > 0 && (
-          <div className="mb-3">
-            <h3 className="text-sm font-medium text-gray-700">Above:</h3>
-            <div className="bg-gray-100 p-2 rounded-[10px] text-gray-800">{ancestors.map((ancestor) => <div key={ancestor.name}>{ancestor.name}</div>)}</div>
-          </div>
+          <>
+            <h3 className="text-sm font-semibold">Above:</h3>
+            <div>{ancestors.map((ancestor) => <div key={ancestor.name}>{ancestor.name}</div>)}</div>
+          </>
         )}
 
-        <h3 className="text-sm font-medium text-gray-700 mt-2">Below:</h3>
-        <div className="bg-gray-100 p-2 rounded-[10px] text-gray-800">{renderHierarchy(node)}</div>
+        <h3 className="text-sm font-semibold mt-2">Below:</h3>
+        <div>{renderHierarchy(node)}</div>
 
-        <div className="flex justify-end mt-5">
-          <button onClick={onClose} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-[10px] transition-all duration-200">
-            Close
-          </button>
-        </div>
+        <button onClick={onClose} className="mt-4 bg-blue-500 text-white px-4 py-2 rounded">Close</button>
       </div>
     </div>
   )
@@ -117,37 +100,40 @@ export default function TreeVisualization({ data }: { data: TreeNode }) {
     node.children?.forEach(child => attachParents(child, node))
   }
 
-  // Initialize parent references before rendering
   attachParents(data)
 
   const containerRef = useCallback((containerElem: HTMLDivElement | null) => {
     if (containerElem !== null) {
       const { width, height } = containerElem.getBoundingClientRect()
-      setTranslate({ x: width / 2, y: height / 4 })
+      setTranslate({ x: 100, y: height / 2 })
     }
   }, [])
 
   const heartPathFunc = (linkDatum: { source: { x: number, y: number }, target: { x: number, y: number } }) => {
     const { source, target } = linkDatum
-    const midX = (source.x + target.x) / 2
-    const midY = (source.y + target.y) / 2
-    const curve = 50
+    const dx = target.x - source.x
+    const curve = Math.min(Math.abs(dx) * 0.1, 20)
 
-    return `M${source.x},${source.y} C${midX - curve},${midY + curve}, ${midX + curve},${midY + curve}, ${target.x},${target.y}`
+    return `
+      M ${source.x},${source.y}
+      C ${source.x + dx/3},${source.y}
+        ${source.x + dx*2/3},${target.y}
+        ${target.x},${target.y}
+    `
   }
 
   return (
-    <div ref={containerRef} style={{ width: "100%", height: "400px" }}>
+    <div ref={containerRef} className="w-full h-full min-h-[800px]">
       <Tree
         data={data}
         translate={translate}
-        orientation="vertical"
+        orientation="horizontal"
         pathFunc={heartPathFunc}
         renderCustomNodeElement={(rd3tProps) => (
           <HeartNode {...rd3tProps} onClick={setSelectedNode} />
         )}
-        separation={{ siblings: 2, nonSiblings: 2.5 }}
-        nodeSize={{ x: 100, y: 100 }}
+        separation={{ siblings: 1.5, nonSiblings: 2 }}
+        nodeSize={{ x: 200, y: 120 }}
       />
       {selectedNode && <Modal node={selectedNode} onClose={() => setSelectedNode(null)} />}
     </div>

@@ -40,17 +40,10 @@ export default function HeartTree() {
     }
   };
 
-  const handleEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      handleSubmit(e);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setTreeData(null);
-    setPrompt("");
 
     try {
       const generatedTree = await fetchTreeData();
@@ -69,36 +62,52 @@ export default function HeartTree() {
   };
 
   return (
-    <div className="w-full max-w-4xl">
-      <form onSubmit={handleSubmit} className="mb-8">
-        <div className="flex items-center border-b border-purple-500 py-2 hover:bg-neutral-500 hover:bg-opacity-[.1] transition-all duration-200">
-          <input
-            className="appearance-none bg-transparent hover:text-lg border-none w-full text-gray-700 mr-3 py-1 px-2 leading-tight focus:outline-none transition-all duration-800"
-            type="text"
-            placeholder="Enter your creative prompt..."
-            value={prompt}
-            onKeyDown={handleEnter}
-            onChange={(e) => setPrompt(e.target.value)}
-          />
-          <motion.button
-            className="flex-shrink-0 bg-purple-500 hover:bg-purple-700 border-purple-500 hover:border-purple-700 text-sm border-4 text-white py-1 px-2 rounded"
-            type="submit"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            disabled={loading}
-          >
-            {loading ? "Loading..." : "Generate Tree"}
-          </motion.button>
-        </div>
-      </form>
+    <div className="h-screen w-screen flex flex-col">
+      {/* Fixed header bar at top */}
+      <div className="w-full p-4 bg-white/80 backdrop-blur-sm fixed top-0 left-0 z-10 shadow-sm">
+        <div className="max-w-4xl mx-auto flex items-center gap-4">
+          {/* Logo/Title */}
+          <h1 className="text-purple-600 text-xl font-bold whitespace-nowrap">
+            Nodethis
+          </h1>
 
+          {/* Search form */}
+          <form onSubmit={handleSubmit} className="flex-1">
+            <div className="flex items-center border-2 border-purple-500 rounded-lg py-2 px-4 bg-white">
+              <input
+                className="appearance-none bg-transparent border-none w-full text-gray-700 mr-3 py-1 px-2 leading-tight focus:outline-none"
+                type="text"
+                placeholder="Enter your creative prompt..."
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+              />
+              <motion.button
+                className="flex-shrink-0 bg-purple-500 hover:bg-purple-700 border-purple-500 hover:border-purple-700 text-sm border-4 text-white py-1 px-4 rounded-lg"
+                type="submit"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                disabled={loading}
+              >
+                {loading ? "Loading..." : "Generate Tree"}
+              </motion.button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      {/* Loading spinner */}
       {loading && (
-        <div className="flex justify-center items-center">
-          <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
+          <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
       )}
 
-      {treeData && <TreeVisualization data={treeData} />}
+      {/* Tree visualization container with fixed height */}
+      <div className="flex-1 mt-16"> {/* Reduced top margin */}
+        <div className="h-[calc(100vh-4rem)] w-full overflow-auto border-t border-purple-100">
+          {treeData && <TreeVisualization data={treeData} />}
+        </div>
+      </div>
     </div>
   );
 }

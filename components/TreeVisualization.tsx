@@ -44,6 +44,33 @@ const getModelResponse = async (ancestors: string[], currentName: string): Promi
   }
 }
 
+const parseNumberedList = (text: string): string[] => {
+  return text
+    .split(/\n/)
+    .map(line => line.trim().replace(/^\d+\.\s*/, "")) // Remove number prefix
+    .filter(line => line.length > 0); // Remove empty lines
+};
+
+const generateNewIdeas = async (node: TreeNode): Promise<TreeNode[]> => {
+  const ancestors = findAncestors(node);
+  const ancestorNames = ancestors.map(n => n.name);
+  const fullContext = [...ancestorNames, node.name];
+
+  // Fetch a single response (which may be a numbered list)
+  const responseText = await getModelResponse(fullContext, node.name);
+  
+  // Parse into individual ideas
+  const ideas = parseNumberedList(responseText);
+
+  return ideas.map(idea => ({
+    name: idea,
+    children: [],
+    isExpanded: false,
+    parent: node  // Ensure parent reference is set
+  }));
+};
+
+
 // Recursively find ancestors of a given node
 const findAncestors = (node: TreeNode | null): TreeNode[] => {
   const ancestors: TreeNode[] = []
@@ -60,30 +87,6 @@ const addExpandedState = (node: TreeNode, isRoot: boolean = true): TreeNode => {
     isExpanded: isRoot, // Root node starts expanded, others collapsed
     children: node.children?.map(child => addExpandedState(child, false))
   }
-}
-
-// Update the generateNewIdeas function
-const generateNewIdeas = async (node: TreeNode): Promise<TreeNode[]> => {
-  const ancestors = findAncestors(node);
-  const ancestorNames = ancestors.map(n => n.name);
-  
-  // Include the current node's name in the context
-  const fullContext = [...ancestorNames, node.name];
-  
-  // Generate three variations using the model with full context
-  const variations = await Promise.all([
-    getModelResponse(fullContext, node.name),
-    getModelResponse(fullContext, node.name),
-    getModelResponse(fullContext, node.name),
-  ]);
-
-  // Ensure each new node can also be expanded
-  return variations.map(name => ({
-    name,
-    children: [],
-    isExpanded: false,
-    parent: node  // Ensure parent reference is set
-  }));
 }
 
 const HeartNode = ({ 
@@ -231,10 +234,7 @@ const Modal = ({ node, onClose }: { node: TreeNode, onClose: () => void }) => {
       });
       
       const imageData = await imageResponse.json();
-
-      console.log('Image responseee:', imageData);
       
-      console.log('New image URL:', imageData.imageUrl);
       setCurrentImage(imageData.imageUrl);
 
       setMessages(prev => {
@@ -355,9 +355,14 @@ export default function TreeVisualization({ data }: { data: TreeNode }) {
       if (node.name === nodeDatum.name) {
         const newExpanded = !node.isExpanded;
         
-        // Generate new ideas if expanding a node without children
         if (newExpanded && (!node.children || node.children.length === 0)) {
           const newChildren = await generateNewIdeas(node);
+          
+          // Ensure correct parent references
+          newChildren.forEach(child => {
+            child.parent = node;
+          });
+    
           return {
             ...node,
             isExpanded: newExpanded,
@@ -370,7 +375,7 @@ export default function TreeVisualization({ data }: { data: TreeNode }) {
           isExpanded: newExpanded 
         };
       }
-      
+    
       if (node.children) {
         const newChildren = await Promise.all(node.children.map(toggleNode));
         return {
@@ -378,9 +383,9 @@ export default function TreeVisualization({ data }: { data: TreeNode }) {
           children: newChildren
         };
       }
-      
+    
       return node;
-    };
+    };    
     
     const newData = await toggleNode(treeData);
     setTreeData(newData);
